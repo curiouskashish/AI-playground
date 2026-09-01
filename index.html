@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Udhyam Evaluation Playground</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <h1>Udhyam Evaluation Playground</h1>
+            <p class="subtitle">Evaluate student submissions for the Udhyam Learning Foundation's entrepreneurial program in Indian government schools</p>
+            
+            <div class="header-controls">
+                <div class="control-group">
+                    <label for="modelSelect">AI Model:</label>
+                    <select id="modelSelect" class="select-input">
+                        <option value="gpt-5">OpenAI GPT-5</option>
+                        <option value="gpt-5.1">OpenAI GPT-5.1</option>
+                        <option value="gpt-5.1-codex">OpenAI GPT-5.1 Codex</option>
+                        <option value="gpt-5-mini" selected>OpenAI GPT-5 Mini</option>
+                        <option value="gpt-5-nano">OpenAI GPT-5 Nano</option>
+                        <option value="gpt-4">OpenAI GPT-4</option>
+                        <option value="gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</option>
+                        <option value="claude-3-opus">Anthropic Claude 3 Opus</option>
+                        <option value="claude-3-sonnet">Anthropic Claude 3 Sonnet</option>
+                        <option value="gemini-pro">Google Gemini Pro</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="apiKey">API Key:</label>
+                    <div class="api-key-wrapper">
+                        <input type="password" id="apiKey" class="text-input" placeholder="Enter API key...">
+                        <button type="button" id="toggleApiKey" class="icon-button" aria-label="Toggle API key visibility">👁️</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label for="temperature">Temperature: <span id="tempValue">1</span></label>
+                    <input type="range" id="temperature" min="0" max="1" step="0.1" value="1" class="slider">
+                </div>
+            </div>
+        </header>
+
+        <!-- Mode Selection Tabs -->
+        <div class="tabs">
+            <button class="tab-button active" data-tab="single-evaluation">Single Evaluation</button>
+            <button class="tab-button" data-tab="batch-processing">Batch Processing</button>
+        </div>
+
+        <!-- Single Evaluation Mode -->
+        <div id="single-evaluation" class="tab-content active">
+            <!-- Evaluation Type Tabs -->
+            <div class="sub-tabs">
+                <button class="sub-tab-button active" data-subtab="idea-evaluation">Idea Submission Evaluation</button>
+                <button class="sub-tab-button" data-subtab="pitch-evaluation">Pitch Video Evaluation</button>
+                <button class="sub-tab-button" data-subtab="idea-generation">Idea Generation</button>
+            </div>
+
+            <!-- Idea Submission Evaluation Tab -->
+            <div id="idea-evaluation" class="sub-tab-content active">
+                <div class="section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <button class="collapse-button" onclick="togglePromptSection('idea-prompt-section')" style="flex: 1; margin-right: 10px;">
+                            <span>System Prompt</span>
+                            <span class="collapse-icon">▶</span>
+                        </button>
+                        <button id="saveIdeaPrompt" class="btn btn-primary" style="white-space: nowrap;">Save Prompt</button>
+                    </div>
+                    <div id="idea-prompt-section" class="collapsible-content collapsed">
+                        <textarea id="ideaSystemPrompt" class="prompt-textarea" rows="20"></textarea>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Student Input</h2>
+                    <div class="input-group">
+                        <label for="businessIdea">Business Idea:</label>
+                        <textarea id="businessIdea" class="large-textarea" placeholder="Enter business idea..."></textarea>
+                    </div>
+                    <div class="button-group">
+                        <button id="loadIdeaSample" class="btn btn-secondary">Load Sample Data</button>
+                        <button id="evaluateIdeas" class="btn btn-primary">Evaluate Ideas</button>
+                    </div>
+                </div>
+
+                <div id="idea-loading" class="loading-spinner hidden">
+                    <div class="spinner"></div>
+                    <p>Evaluating ideas...</p>
+                </div>
+
+                <div id="idea-results" class="results-section hidden">
+                    <div class="results-header">
+                        <h2>Evaluation Results</h2>
+                        <div class="results-actions">
+                            <button id="clearIdeaResults" class="btn btn-secondary">Clear Results</button>
+                            <button id="exportIdeaResults" class="btn btn-secondary">Export as JSON</button>
+                        </div>
+                    </div>
+                    <div id="idea-results-content" class="results-content"></div>
+                </div>
+            </div>
+
+            <!-- Pitch Video Evaluation Tab -->
+            <div id="pitch-evaluation" class="sub-tab-content">
+                <div class="section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <button class="collapse-button" onclick="togglePromptSection('pitch-prompt-section')" style="flex: 1; margin-right: 10px;">
+                            <span>System Prompt</span>
+                            <span class="collapse-icon">▶</span>
+                        </button>
+                        <button id="savePitchPrompt" class="btn btn-primary" style="white-space: nowrap;">Save Prompt</button>
+                    </div>
+                    <div id="pitch-prompt-section" class="collapsible-content collapsed">
+                        <textarea id="pitchSystemPrompt" class="prompt-textarea" rows="20"></textarea>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Student Input</h2>
+                    <div class="input-group">
+                        <label for="pitchTranscript">Pitch Video Transcript:</label>
+                        <textarea id="pitchTranscript" class="large-textarea" placeholder="Paste pitch video transcript here..."></textarea>
+                    </div>
+                    <div class="button-group">
+                        <button id="loadPitchSample" class="btn btn-secondary">Load Sample Data</button>
+                        <button id="evaluatePitch" class="btn btn-primary">Evaluate Pitch</button>
+                    </div>
+                </div>
+
+                <div id="pitch-loading" class="loading-spinner hidden">
+                    <div class="spinner"></div>
+                    <p>Evaluating pitch...</p>
+                </div>
+
+                <div id="pitch-results" class="results-section hidden">
+                    <div class="results-header">
+                        <h2>Evaluation Results</h2>
+                        <div class="results-actions">
+                            <button id="clearPitchResults" class="btn btn-secondary">Clear Results</button>
+                            <button id="exportPitchResults" class="btn btn-secondary">Export as JSON</button>
+                        </div>
+                    </div>
+                    <div id="pitch-results-content" class="results-content"></div>
+                </div>
+            </div>
+
+            <!-- Idea Generation Tab -->
+            <div id="idea-generation" class="sub-tab-content">
+                <div class="section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <button class="collapse-button" onclick="togglePromptSection('ideagen-prompt-section')" style="flex: 1; margin-right: 10px;">
+                            <span>System Prompt</span>
+                            <span class="collapse-icon">▶</span>
+                        </button>
+                        <button id="saveIdeaGenPrompt" class="btn btn-primary" style="white-space: nowrap;">Save Prompt</button>
+                    </div>
+                    <div id="ideagen-prompt-section" class="collapsible-content collapsed">
+                        <textarea id="ideaGenSystemPrompt" class="prompt-textarea" rows="20"></textarea>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Pitch Video Transcript</h2>
+                    <div class="input-group">
+                        <label for="ideaGenTranscript">Student Pitch Transcript:</label>
+                        <textarea id="ideaGenTranscript" class="large-textarea" placeholder="Paste the student's pitch video transcript here..."></textarea>
+                    </div>
+                    <div class="button-group">
+                        <button id="loadIdeaGenSample" class="btn btn-secondary">Load Sample Data</button>
+                        <button id="generateIdea" class="btn btn-primary">Generate Idea</button>
+                    </div>
+                </div>
+
+                <div id="ideagen-loading" class="loading-spinner hidden">
+                    <div class="spinner"></div>
+                    <p>Generating idea summary...</p>
+                </div>
+
+                <div id="ideagen-results" class="results-section hidden">
+                    <div class="results-header">
+                        <h2>Idea Bank Entry</h2>
+                        <div class="results-actions">
+                            <button id="clearIdeaGenResults" class="btn btn-secondary">Clear Results</button>
+                            <button id="exportIdeaGenResults" class="btn btn-secondary">Export as JSON</button>
+                        </div>
+                    </div>
+                    <div id="ideagen-results-content" class="results-content"></div>
+                </div>
+
+                <!-- Representative Image (shown after text results) -->
+                <div id="ideagen-image-section" class="hidden">
+                    <div class="section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <button class="collapse-button" onclick="togglePromptSection('ideagen-image-prompt-section')" style="flex: 1; margin-right: 10px;">
+                                <span>Image Prompt Template</span>
+                                <span class="collapse-icon">▶</span>
+                            </button>
+                            <button id="saveIdeaImagePrompt" class="btn btn-primary" style="white-space: nowrap;">Save Prompt</button>
+                        </div>
+                        <div id="ideagen-image-prompt-section" class="collapsible-content collapsed">
+                            <div style="margin-bottom: 10px;">
+                                <label for="ideaImageModel" style="display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.9rem;">Image Model</label>
+                                <select id="ideaImageModel" class="select-input">
+                                    <option value="gpt-image-2" selected>OpenAI GPT Image 2</option>
+                                    <option value="gpt-image-1">OpenAI GPT Image 1</option>
+                                </select>
+                            </div>
+                            <textarea id="ideaImagePrompt" class="prompt-textarea" rows="12"></textarea>
+                            <p class="ideagen-image-prompt-hint">
+                                Supported placeholders: <code>{{idea_title}}</code>, <code>{{problem_or_opportunity}}</code>, <code>{{solution_details}}</code>, <code>{{potential_impact}}</code>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>Representative Image</h2>
+                        <div class="button-group">
+                            <button id="generateIdeaImage" class="btn btn-primary">Generate Image</button>
+                        </div>
+
+                        <div id="ideagen-image-loading" class="loading-spinner hidden">
+                            <div class="spinner"></div>
+                            <p>Generating image… (this can take 10–30 seconds)</p>
+                        </div>
+
+                        <div id="ideagen-image-results" class="hidden">
+                            <div class="ideagen-image-variants">
+                                <figure class="ideagen-image-figure">
+                                    <img id="ideagen-image-large" class="ideagen-image-thumb" width="197" height="171" alt="Representative image, 197x171">
+                                    <figcaption>197 × 171</figcaption>
+                                </figure>
+                                <figure class="ideagen-image-figure">
+                                    <img id="ideagen-image-medium" class="ideagen-image-thumb" width="156" height="171" alt="Representative image, 156x171">
+                                    <figcaption>156 × 171</figcaption>
+                                </figure>
+                                <figure class="ideagen-image-figure">
+                                    <img id="ideagen-image-small" class="ideagen-image-thumb" width="116" height="171" alt="Representative image, 116x171">
+                                    <figcaption>116 × 171</figcaption>
+                                </figure>
+                            </div>
+                            <div class="ideagen-image-actions">
+                                <button id="downloadIdeaImageLarge" class="btn btn-secondary">Download 197×171</button>
+                                <button id="downloadIdeaImageMedium" class="btn btn-secondary">Download 156×171</button>
+                                <button id="downloadIdeaImageSmall" class="btn btn-secondary">Download 116×171</button>
+                            </div>
+                            <details class="ideagen-raw-details" style="margin-top: 12px;">
+                                <summary>View resolved image prompt</summary>
+                                <pre id="ideagen-image-resolved-prompt" class="ideagen-raw-json"></pre>
+                            </details>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Batch Processing Mode -->
+        <div id="batch-processing" class="tab-content">
+            <div class="evaluation-sections">
+                <!-- Idea Submission Batch Evaluation -->
+                <div class="evaluation-card">
+                    <h2>💡 Idea Submission Evaluation</h2>
+                    <p>Upload a CSV file containing idea submissions for batch evaluation.</p>
+                    
+                    <div class="file-upload-area" id="ideaUploadArea">
+                        <label for="ideaFileInput" class="file-label">
+                            <div class="upload-icon">📁</div>
+                            <div>
+                                <strong>Click to upload</strong> or drag and drop
+                            </div>
+                            <div style="margin-top: 5px; font-size: 14px; color: #999;">
+                                CSV files only
+                            </div>
+                        </label>
+                        <input 
+                            type="file" 
+                            id="ideaFileInput" 
+                            class="file-input" 
+                            accept=".csv"
+                            data-type="idea"
+                        >
+                        <div class="file-info" id="ideaFileInfo">No file selected</div>
+                    </div>
+
+                    <div class="requirements">
+                        <h3>Expected CSV Columns (Input):</h3>
+                        <ul>
+                            <li><strong>business_idea</strong> (required) - The business idea text to evaluate</li>
+                        </ul>
+                        <h3 style="margin-top: 20px;">Output CSV Columns:</h3>
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 10px;">
+                            The evaluation will return a CSV file with the following columns:
+                        </p>
+                        <ul style="margin-top: 10px;">
+                            <li><strong>sector</strong> - The business sector identified</li>
+                            <li><strong>legibility_clarity</strong> - True/False indicator for clarity</li>
+                            <li><strong>legibility_clarity_reason</strong> - Reason for clarity evaluation</li>
+                            <li><strong>legibility_coherence</strong> - True/False indicator for coherence</li>
+                            <li><strong>legibility_coherence_reason</strong> - Reason for coherence evaluation</li>
+                            <li><strong>specificity_detailed</strong> - True/False indicator for detailed</li>
+                            <li><strong>specificity_detailed_reason</strong> - Reason for detailed evaluation</li>
+                            <li><strong>specificity_concrete</strong> - True/False indicator for concrete</li>
+                            <li><strong>specificity_concrete_reason</strong> - Reason for concrete evaluation</li>
+                            <li><strong>specificity_score</strong> - Score from 1-10</li>
+                            <li><strong>executability_feasible</strong> - True/False indicator for feasible</li>
+                            <li><strong>executability_feasible_reason</strong> - Reason for feasible evaluation</li>
+                            <li><strong>executability_actionable</strong> - True/False indicator for actionable</li>
+                            <li><strong>executability_actionable_reason</strong> - Reason for actionable evaluation</li>
+                            <li><strong>novelty_novel</strong> - True/False indicator for novel</li>
+                            <li><strong>novelty_novel_reason</strong> - Reason for novelty evaluation</li>
+                        </ul>
+                        <p style="margin-top: 15px; color: var(--text-light); font-size: 0.85rem; font-style: italic;">
+                            Note: The backend API endpoint should handle the new evaluation structure. 
+                            Ensure your backend is updated to parse the single business_idea field and return 
+                            results in the format above.
+                        </p>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-evaluate" id="ideaEvaluateBtn" disabled>
+                            Evaluate Ideas
+                        </button>
+                    </div>
+
+                    <div class="status-message" id="ideaStatus"></div>
+                </div>
+
+                <!-- Pitch Video Batch Evaluation -->
+                <div class="evaluation-card">
+                    <h2>🎥 Pitch Video Evaluation</h2>
+                    <p>Upload a CSV file containing pitch video transcripts for batch evaluation using AI.</p>
+                    
+                    <div class="file-upload-area" id="pitchUploadArea">
+                        <label for="pitchFileInput" class="file-label">
+                            <div class="upload-icon">📁</div>
+                            <div>
+                                <strong>Click to upload</strong> or drag and drop
+                            </div>
+                            <div style="margin-top: 5px; font-size: 14px; color: #999;">
+                                CSV files only
+                            </div>
+                        </label>
+                        <input 
+                            type="file" 
+                            id="pitchFileInput" 
+                            class="file-input" 
+                            accept=".csv"
+                            data-type="pitch"
+                        >
+                        <div class="file-info" id="pitchFileInfo">No file selected</div>
+                    </div>
+
+                    <div class="requirements">
+                        <h3>Expected CSV Columns (Input):</h3>
+                        <ul>
+                            <li><strong>transcript</strong> (required) - The pitch video transcript text to evaluate</li>
+                        </ul>
+                        <h3 style="margin-top: 20px;">Output CSV Columns:</h3>
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 10px;">
+                            The evaluation will return a CSV file with the following columns:
+                        </p>
+                        <ul style="margin-top: 10px;">
+                            <li><strong>sector</strong> - Business sector classification (Art and crafts, Agriculture, Education and social cause, Food, Personal care and hygiene, Sustainable environment, Tourism and hospitality, Technology driven solutions, Others)</li>
+                            <li><strong>articulation_idea_clearly_defined</strong> - True/False if business idea is clear</li>
+                            <li><strong>articulation_idea_clearly_defined_reason</strong> - Reason for the assessment</li>
+                            <li><strong>articulation_problem_mentioned</strong> - True/False if problem/need is mentioned</li>
+                            <li><strong>articulation_problem_mentioned_reason</strong> - Reason for the assessment</li>
+                            <li><strong>articulation_score</strong> - Score from 1-10 for articulation quality</li>
+                            <li><strong>product_usp_mentioned</strong> - True/False if USP is mentioned</li>
+                            <li><strong>product_usp_mentioned_reason</strong> - Reason for the assessment</li>
+                            <li><strong>product_selling_plan_mentioned</strong> - True/False if selling plan/target customers mentioned</li>
+                            <li><strong>product_selling_plan_mentioned_reason</strong> - Reason for the assessment</li>
+                            <li><strong>product_quality_score</strong> - Score from 1-10 for product description quality</li>
+                            <li><strong>transcript_quality_note</strong> - Optional note about transcript quality issues</li>
+                        </ul>
+                        <p style="margin-top: 15px; color: var(--text-light); font-size: 0.85rem; font-style: italic;">
+                            Note: Transcripts are evaluated using AI with generous interpretation for student-centric assessment.
+                            Auto-generated transcripts with errors are handled with sympathy.
+                        </p>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-evaluate" id="pitchEvaluateBtn" disabled>
+                            Evaluate Videos
+                        </button>
+                    </div>
+
+                    <div class="status-message" id="pitchStatus"></div>
+                </div>
+
+                <!-- Sector Assignment (Large Dataset) -->
+                <div class="evaluation-card">
+                    <h2>🏷️ Sector Assignment (Large Dataset)</h2>
+                    <p>Assign a single <strong>sector</strong> to each business idea. Optimised for very large CSVs (e.g. 54,000+ rows). Uses chunked processing and one output column.</p>
+                    
+                    <div class="file-upload-area" id="sectorUploadArea">
+                        <label for="sectorFileInput" class="file-label">
+                            <div class="upload-icon">📁</div>
+                            <div>
+                                <strong>Click to upload</strong> or drag and drop
+                            </div>
+                            <div style="margin-top: 5px; font-size: 14px; color: #999;">
+                                CSV files only
+                            </div>
+                        </label>
+                        <input 
+                            type="file" 
+                            id="sectorFileInput" 
+                            class="file-input" 
+                            accept=".csv"
+                            data-type="sector"
+                        >
+                        <div class="file-info" id="sectorFileInfo">No file selected</div>
+                    </div>
+
+                    <div class="requirements">
+                        <h3>Expected CSV Columns (Input):</h3>
+                        <ul>
+                            <li><strong>business_idea</strong> (required) - The business idea text to classify</li>
+                        </ul>
+                        <h3 style="margin-top: 20px;">Output CSV Columns:</h3>
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 10px;">
+                            The output CSV will contain all your original columns plus:
+                        </p>
+                        <ul style="margin-top: 10px;">
+                            <li><strong>sector</strong> - One of: Art and crafts, Agriculture, Education and social cause, Food, Personal care and hygiene, Sustainable environment, Tourism and hospitality, Technology driven solutions, Others</li>
+                        </ul>
+                        <p style="margin-top: 15px; color: var(--text-light); font-size: 0.85rem; font-style: italic;">
+                            For very large datasets (50k+ rows), use the CLI script to avoid browser timeouts. See README.
+                        </p>
+                        <div style="margin-top: 15px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                            <label for="sectorMaxConcurrent" style="color: var(--text-muted); font-size: 0.9rem;">Concurrent requests:</label>
+                            <input type="number" id="sectorMaxConcurrent" min="5" max="30" value="15" style="width: 70px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">Chunk size:</span>
+                            <input type="number" id="sectorChunkSize" min="1000" max="10000" step="500" value="3000" style="width: 90px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-evaluate" id="sectorEvaluateBtn" disabled>
+                            Assign Sectors
+                        </button>
+                    </div>
+
+                    <div class="status-message" id="sectorStatus"></div>
+                </div>
+
+                <!-- Idea Generation Batch (Card 1: text only) -->
+                <div class="evaluation-card">
+                    <h2>💡 Idea Generation from Pitch Transcripts</h2>
+                    <p>Generate structured Idea Bank entries from a CSV of pitch transcripts. Each row gets a unique <code>idea_id</code> you can use to attach images later.</p>
+
+                    <div class="file-upload-area" id="ideaGenBatchUploadArea">
+                        <label for="ideaGenBatchFileInput" class="file-label">
+                            <div class="upload-icon">📁</div>
+                            <div><strong>Click to upload</strong> or drag and drop</div>
+                            <div style="margin-top: 5px; font-size: 14px; color: #999;">CSV files only</div>
+                        </label>
+                        <input type="file" id="ideaGenBatchFileInput" class="file-input" accept=".csv" data-type="ideagen">
+                        <div class="file-info" id="ideaGenBatchFileInfo">No file selected</div>
+                    </div>
+
+                    <div class="requirements">
+                        <h3>Expected CSV Columns (Input):</h3>
+                        <ul>
+                            <li><strong>transcript</strong> (required) — the pitch video transcript</li>
+                            <li><strong>idea_id</strong> (optional) — if provided, used as-is; otherwise generated automatically</li>
+                        </ul>
+                        <h3 style="margin-top: 20px;">Output CSV Columns:</h3>
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 10px;">All original columns plus:</p>
+                        <ul style="margin-top: 10px;">
+                            <li><strong>idea_id</strong> — unique identifier (e.g. <code>idea_V1StGXR8Z2</code>)</li>
+                            <li><strong>idea_title</strong>, <strong>problem_or_opportunity</strong></li>
+                            <li><strong>problem_opportunity_themes</strong>, <strong>business_categories</strong>, <strong>business_subcategories</strong> (pipe-joined)</li>
+                            <li><strong>solution_details</strong>, <strong>potential_impact</strong></li>
+                            <li><strong>status</strong> (<code>ok</code> / <code>unprocessable</code> / <code>error</code>), <strong>status_reason</strong></li>
+                        </ul>
+                        <h3 style="margin-top: 20px;">Prompt Template</h3>
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 10px;">
+                            Edit and save the prompt here whenever you want to change batch idea generation behavior.
+                        </p>
+                        <textarea id="ideaGenBatchPrompt" class="prompt-textarea" rows="18" style="margin-top: 8px;"></textarea>
+                        <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                            <button id="saveIdeaGenBatchPrompt" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.85rem;">Save Prompt</button>
+                        </div>
+                        <p style="margin-top: 15px; color: var(--text-light); font-size: 0.85rem; font-style: italic;">
+                            Uses the saved idea-generation prompt from browser storage. You can edit it here or on the single-idea tab.
+                        </p>
+                        <div style="margin-top: 15px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                            <label for="ideaGenBatchConcurrency" style="color: var(--text-muted); font-size: 0.9rem;">Concurrent requests:</label>
+                            <input type="number" id="ideaGenBatchConcurrency" min="1" max="20" value="10" style="width: 70px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-evaluate" id="ideaGenBatchEvaluateBtn" disabled>Generate Ideas</button>
+                    </div>
+
+                    <div class="status-message" id="ideaGenBatchStatus"></div>
+                </div>
+
+                <!-- Idea Images Batch (Card 2: image generation only) -->
+                <div class="evaluation-card">
+                    <h2>🎨 Image Generation for Ideas</h2>
+                    <p>Generate three image sizes (197×171, 156×171, 116×171) per idea and save them locally, mapped by <code>idea_id</code>. Use the CSV from the previous card as input.</p>
+
+                    <div class="file-upload-area" id="ideaImageBatchUploadArea">
+                        <label for="ideaImageBatchFileInput" class="file-label">
+                            <div class="upload-icon">📁</div>
+                            <div><strong>Click to upload</strong> or drag and drop</div>
+                            <div style="margin-top: 5px; font-size: 14px; color: #999;">CSV files only</div>
+                        </label>
+                        <input type="file" id="ideaImageBatchFileInput" class="file-input" accept=".csv" data-type="ideaimage">
+                        <div class="file-info" id="ideaImageBatchFileInfo">No file selected</div>
+                    </div>
+
+                    <div class="requirements">
+                        <h3>Expected CSV Columns (Input):</h3>
+                        <ul>
+                            <li><strong>idea_id</strong>, <strong>idea_title</strong>, <strong>problem_or_opportunity</strong>, <strong>solution_details</strong>, <strong>potential_impact</strong>, <strong>status</strong> — exactly what the Idea Generation card outputs.</li>
+                        </ul>
+                        <p style="color: var(--text-light); font-size: 0.85rem; margin-top: 10px;">Only rows with <code>status == "ok"</code> are processed.</p>
+
+                        <h3 style="margin-top: 20px;">Output CSV Columns:</h3>
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 10px;">All input columns plus:</p>
+                        <ul style="margin-top: 10px;">
+                            <li><strong>image_status</strong> (<code>ok</code> / <code>skipped</code> / <code>error</code>), <strong>image_error</strong></li>
+                            <li><strong>image_large_path</strong>, <strong>image_medium_path</strong>, <strong>image_small_path</strong> — storage-root-relative paths like <code>ideas/&lt;idea_id&gt;/large.png</code>. When you later move to S3/GCS, these strings become the object keys unchanged.</li>
+                        </ul>
+
+                        <h3 style="margin-top: 20px;">Image Prompt Template</h3>
+                        <p style="color: var(--text-light); font-size: 0.85rem;">Shared with the single-idea page (edits here sync there).</p>
+                        <div style="margin-top: 8px;">
+                            <label for="ideaImageBatchModel" style="display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.9rem;">Image Model</label>
+                            <select id="ideaImageBatchModel" class="select-input">
+                                <option value="gpt-image-2" selected>OpenAI GPT Image 2</option>
+                                <option value="gpt-image-1">OpenAI GPT Image 1</option>
+                            </select>
+                        </div>
+                        <textarea id="ideaImageBatchPrompt" class="prompt-textarea" rows="10" style="margin-top: 8px;"></textarea>
+                        <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                            <button id="saveIdeaImageBatchPrompt" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.85rem;">Save Prompt</button>
+                        </div>
+                        <p class="ideagen-image-prompt-hint" style="margin-top: 6px;">
+                            Supported placeholders: <code>{{idea_title}}</code>, <code>{{problem_or_opportunity}}</code>, <code>{{solution_details}}</code>, <code>{{potential_impact}}</code>
+                        </p>
+
+                        <div style="margin-top: 15px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                            <label for="ideaImageBatchConcurrency" style="color: var(--text-muted); font-size: 0.9rem;">Concurrent image requests:</label>
+                            <input type="number" id="ideaImageBatchConcurrency" min="1" max="5" value="3" style="width: 70px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+                            <label style="display: flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 0.9rem;">
+                                <input type="checkbox" id="ideaImageBatchSkipExisting" checked>
+                                Skip rows whose image files already exist
+                            </label>
+                        </div>
+                        <p style="margin-top: 10px; color: var(--text-light); font-size: 0.8rem; font-style: italic;">
+                            Hard cap: 200 eligible rows per run. Above 50 rows, you'll be asked to confirm.
+                        </p>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-evaluate" id="ideaImageBatchEvaluateBtn" disabled>Generate Images</button>
+                    </div>
+
+                    <div class="status-message" id="ideaImageBatchStatus"></div>
+                </div>
+
+                <!-- Idea Images Batch API (New Module) -->
+                <div class="evaluation-card">
+                    <h2>Image generation for Ideas using Batch API</h2>
+                    <p>Submit a CSV to OpenAI's Batch API, let the job run in the background, and come back later to download the finished CSV with image paths.</p>
+
+                    <div class="file-upload-area" id="ideaImageBatchApiUploadArea">
+                        <label for="ideaImageBatchApiFileInput" class="file-label">
+                            <div class="upload-icon">📁</div>
+                            <div><strong>Click to upload</strong> or drag and drop</div>
+                            <div style="margin-top: 5px; font-size: 14px; color: #999;">CSV files only</div>
+                        </label>
+                        <input type="file" id="ideaImageBatchApiFileInput" class="file-input" accept=".csv" data-type="ideaimagebatchapi">
+                        <div class="file-info" id="ideaImageBatchApiFileInfo">No file selected</div>
+                    </div>
+
+                    <div class="requirements">
+                        <h3>What this module does</h3>
+                        <ul>
+                            <li>Builds a Batch API job for each eligible idea row.</li>
+                            <li>Lets you edit the image prompt before submission.</li>
+                            <li>Checks job status and creates the output CSV when the batch finishes.</li>
+                        </ul>
+
+                        <h3 style="margin-top: 20px;">Expected CSV Columns (Input)</h3>
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 10px;">
+                            Upload the CSV produced by the Idea Generation card, or any CSV with the same shape.
+                        </p>
+                        <ul style="margin-top: 10px;">
+                            <li><strong>idea_id</strong> (required)</li>
+                            <li><strong>idea_title</strong> (required)</li>
+                            <li><strong>problem_or_opportunity</strong> (required)</li>
+                            <li><strong>solution_details</strong> (required)</li>
+                            <li><strong>potential_impact</strong> (required)</li>
+                            <li><strong>status</strong> (required) - only rows with <code>status == "ok"</code> are submitted</li>
+                        </ul>
+
+                        <h3 style="margin-top: 20px;">Output CSV Columns</h3>
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 10px;">
+                            The downloaded file contains all original columns plus:
+                        </p>
+                        <ul style="margin-top: 10px;">
+                            <li><strong>batch_job_id</strong> - local job id for this submission</li>
+                            <li><strong>batch_status</strong> - current OpenAI batch status</li>
+                            <li><strong>batch_request_counts</strong> - request count summary from OpenAI</li>
+                            <li><strong>image_status</strong> - <code>ok</code> / <code>skipped</code> / <code>error</code></li>
+                            <li><strong>image_error</strong> - row-level error message, if any</li>
+                            <li><strong>image_large_path</strong>, <strong>image_medium_path</strong>, <strong>image_small_path</strong> - storage-relative paths</li>
+                        </ul>
+
+                        <h3 style="margin-top: 20px;">Image Prompt Template</h3>
+                        <p style="color: var(--text-light); font-size: 0.85rem;">
+                            Edit the prompt before submitting. Supported placeholders:
+                            <code>{{idea_title}}</code>, <code>{{problem_or_opportunity}}</code>, <code>{{solution_details}}</code>, <code>{{potential_impact}}</code>
+                        </p>
+                        <div style="margin-top: 8px;">
+                            <label for="ideaImageBatchApiModel" style="display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.9rem;">Image Model</label>
+                            <select id="ideaImageBatchApiModel" class="select-input">
+                                <option value="gpt-image-2" selected>OpenAI GPT Image 2</option>
+                                <option value="gpt-image-1">OpenAI GPT Image 1</option>
+                            </select>
+                        </div>
+                        <textarea id="ideaImageBatchApiPrompt" class="prompt-textarea" rows="10" style="margin-top: 8px;"></textarea>
+                        <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                            <button id="saveIdeaImageBatchApiPrompt" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.85rem;">Save Prompt</button>
+                        </div>
+                        <p style="margin-top: 10px; color: var(--text-light); font-size: 0.8rem; font-style: italic;">
+                            The job is submitted to OpenAI Batch API and may complete later. Enter your API key in the header controls like the other modules. Use the Refresh Status button or wait for auto-polling to update the job.
+                        </p>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-evaluate" id="ideaImageBatchApiSubmitBtn" disabled>Submit Batch Job</button>
+                        <button class="btn btn-secondary" id="ideaImageBatchApiRefreshBtn" type="button">Refresh Status</button>
+                    </div>
+
+                    <div class="status-message" id="ideaImageBatchApiStatus"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message Container -->
+        <div id="error-message" class="error-message hidden"></div>
+        <div id="success-message" class="success-message hidden"></div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="image_generation.js"></script>
+    <script src="script.js"></script>
+    <script src="batch-script.js"></script>
+</body>
+</html>
